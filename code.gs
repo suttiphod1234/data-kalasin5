@@ -2,7 +2,7 @@ var sheetName = 'Sheet1'
 var scriptProp = PropertiesService.getScriptProperties()
 // UPDATED: Folder ID and Sheet ID
 var folderId = '1ISsWh0UTfH_F2NrhTIefQzwK7Qe_up0X' 
-var sheetId = '1t2rCVoEQatp9FMvjoR0UFUNkWgGP7Y27YTrzHPO8PQ8'
+var sheetId = '1t2rCVoEQatp9FMvjoR0UFUNkWgGP7Y27YTrzHPO8PQ'
 
 function intialSetup () {
   // Not strictly needed anymore if we hardcode ID, but checking permissions
