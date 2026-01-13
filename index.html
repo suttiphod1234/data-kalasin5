@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบฟอร์มเก็บข้อมูลแกนนำหมู่บ้าน</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Sarabun:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+</head>
+
+<body>
+
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1><i class="fa-solid fa-users-viewfinder"></i> ข้อมูลแกนนำ</h1>
+            <p>กรุณากรอกข้อมูลให้ครบถ้วนเพื่อบันทึกลงในระบบ</p>
+        </header>
+
+        <!-- OCR Section -->
+        <div class="ocr-section">
+            <button type="button" id="scanBtn" class="scan-btn">
+                <i class="fa-solid fa-camera"></i> ถ่ายรูปบัตรประชาชน (เติมข้อมูลอัตโนมัติ)
+            </button>
+            <input type="file" id="idCardInput" accept="image/*" capture="environment" style="display: none;">
+
+            <div id="ocr-status" class="ocr-status" style="display: none;">
+                <div class="loader-scanner"></div>
+                <p id="ocr-message">กำลังประมวลผลภาพ... (อาจใช้เวลาสักครู่)</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ocr-progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <form id="dataForm" name="submit-to-google-sheet">
+
+            <div class="form-group">
+                <label for="leader_id"><i class="fa-solid fa-id-card"></i> รหัสแกนนำ</label>
+                <input type="text" id="leader_id" name="leader_id" placeholder="ระบุรหัสแกนนำ" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="district"><i class="fa-solid fa-map-location-dot"></i> อำเภอ</label>
+                    <select id="district" name="district" required>
+                        <option value="" disabled selected>เลือกอำเภอ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sub_district"><i class="fa-solid fa-map"></i> ตำบล</label>
+                    <select id="sub_district" name="sub_district" required disabled>
+                        <option value="" disabled selected>กรุณาเลือกอำเภอก่อน</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="village_moo"><i class="fa-solid fa-house-flag"></i> หมู่บ้าน (หมู่ที่)</label>
+                    <input type="number" id="village_moo" name="village_moo" placeholder="ระบุเลขหมู่" required>
+                </div>
+                <div class="form-group">
+                    <label for="house_number"><i class="fa-solid fa-house"></i> บ้านเลขที่</label>
+                    <input type="text" id="house_number" name="house_number" placeholder="เช่น 123/4" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="fullname"><i class="fa-solid fa-user"></i> ชื่อ - สกุล</label>
+                <input type="text" id="fullname" name="fullname" placeholder="ระบุชื่อและนามสกุล" required>
+            </div>
+
+            <div class="form-group">
+                <label for="voters_count"><i class="fa-solid fa-person-booth"></i> จำนวนผู้มาใช้สิทธิ์ (ในบ้าน)</label>
+                <input type="number" id="voters_count" name="voters_count" placeholder="ระบุจำนวนคน" required min="0">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="submitBtn">
+                    <span class="btn-text">บันทึกข้อมูล</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <div class="loader" id="loader"></div>
+                </button>
+            </div>
+
+            <p id="status-message" class="status-message"></p>
+        </form>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="success-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h2>บันทึกข้อมูลเรียบร้อยแล้ว</h2>
+
+            <button id="addDataBtn" class="add-data-btn">
+                <i class="fa-solid fa-plus"></i> เพิ่มข้อมูลใหม่
+            </button>
+
+            <div class="divider">
+                <span>ติดตามข่าวสาร</span>
+            </div>
+
+            <div class="social-actions container-social">
+                <a href="https://www.facebook.com/roengchart/" target="_blank" class="social-btn facebook">
+                    <i class="fa-brands fa-facebook"></i> Facebook
+                </a>
+                <a href="https://lin.ee/kLEd46X" target="_blank" class="social-btn line">
+                    <i class="fa-brands fa-line"></i> Line
+                </a>
+            </div>
+
+            <button id="closeModalBtn" class="close-btn" style="display:none;">ปิดหน้านี้</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
