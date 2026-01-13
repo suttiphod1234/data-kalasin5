@@ -481,3 +481,28 @@ button[type="submit"]:active {
 .close-btn:hover {
     color: var(--text-color);
 }
+.share-line-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #06C755;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.share-line-btn:hover {
+    background-color: #05ac4a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px -1px rgba(0, 0, 0, 0.15);
+}
+
+.share-line-btn i {
+    font-size: 18px;
+}
