@@ -117,8 +117,8 @@ header p {
     font-size: 16px;
 }
 
-/* OCR Section */
-.ocr-section {
+/* Updated Camera Section */
+.camera-section {
     margin-bottom: 30px;
     background: rgba(255, 255, 255, 0.4);
     padding: 20px;
@@ -149,39 +149,22 @@ header p {
     transform: scale(1.02);
 }
 
-.ocr-status {
-    margin-top: 15px;
-}
-
-.ocr-status p {
+.retake-btn {
+    margin-top: 10px;
+    padding: 8px 16px;
+    border: 1px solid var(--text-muted);
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
     font-size: 14px;
-    color: var(--text-muted);
-    margin: 10px 0;
+    color: var(--text-textColor);
 }
 
-.progress-bar {
-    width: 100%;
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--success-color);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-.loader-scanner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--accent-color);
-    border-top: 3px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
+.file-status-text {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--success-color);
+    font-weight: 500;
 }
 
 
@@ -218,14 +201,12 @@ select {
     padding: 14px 16px;
     border-radius: 12px;
     border: 2px solid transparent;
-    /* Prepare for focus state */
     background: rgba(255, 255, 255, 0.6);
     color: var(--text-color);
     font-size: 16px;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     appearance: none;
-    /* For selects */
 }
 
 select {
@@ -330,7 +311,6 @@ button[type="submit"]:active {
     width: 20px;
     height: 20px;
     -webkit-animation: spin 1s linear infinite;
-    /* Safari */
     animation: spin 1s linear infinite;
 }
 
@@ -353,10 +333,9 @@ button[type="submit"]:active {
     display: block;
 }
 
-/* Modal Styles */
+/* Success Modal Styles */
 .modal {
     display: none;
-    /* Hidden by default */
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -407,7 +386,6 @@ button[type="submit"]:active {
     font-weight: 600;
 }
 
-/* Add Data Button */
 .add-data-btn {
     width: 100%;
     padding: 14px;
@@ -432,7 +410,6 @@ button[type="submit"]:active {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
 }
 
-/* Divider */
 .divider {
     display: flex;
     align-items: center;
@@ -456,7 +433,6 @@ button[type="submit"]:active {
 .social-actions {
     display: flex;
     justify-content: center;
-    /* Center buttons horizontally */
     gap: 12px;
 }
 
@@ -471,7 +447,6 @@ button[type="submit"]:active {
     justify-content: center;
     gap: 8px;
     padding: 10px;
-    /* Reduced padding */
     border-radius: 12px;
     text-decoration: none;
     font-weight: 500;
@@ -505,4 +480,151 @@ button[type="submit"]:active {
 
 .close-btn:hover {
     color: var(--text-color);
+}
+
+
+/* --- CAMERA MODAL & OVERLAY STYLES --- */
+.camera-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 2000;
+    flex-direction: column;
+}
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Guide Frame */
+.guide-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    /* Adjust based on ID card ratio usually 8.6/5.4 ~= 1.6 */
+    max-width: 400px;
+    aspect-ratio: 8.6 / 5.4;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+    /* Dark overlay outside */
+    border-radius: 15px;
+    pointer-events: none;
+    /* Let clicks pass through */
+    z-index: 10;
+}
+
+/* Corners for style */
+.corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: #4f46e5;
+    border-style: solid;
+    border-width: 0;
+}
+
+.top-left {
+    top: -2px;
+    left: -2px;
+    border-top-width: 4px;
+    border-left-width: 4px;
+    border-radius: 4px 0 0 0;
+}
+
+.top-right {
+    top: -2px;
+    right: -2px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-radius: 0 4px 0 0;
+}
+
+.bottom-left {
+    bottom: -2px;
+    left: -2px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-radius: 0 0 0 4px;
+}
+
+.bottom-right {
+    bottom: -2px;
+    right: -2px;
+    border-bottom-width: 4px;
+    border-right-width: 4px;
+    border-radius: 0 0 4px 0;
+}
+
+.guide-text {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 16px;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Camera Controls */
+.camera-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 20;
+    padding: 0 20px;
+}
+
+.shutter-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: white;
+    border: 5px solid rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.shutter-btn:active {
+    transform: scale(0.95);
+}
+
+.icon-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    color: white;
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon-btn:hover {
+    background: rgba(0, 0, 0, 0.6);
 }

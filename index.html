@@ -12,7 +12,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <!-- Removed Tesseract.js -->
 </head>
 
 <body>
@@ -29,20 +29,18 @@
             <p>กรุณากรอกข้อมูลให้ครบถ้วนเพื่อบันทึกลงในระบบ</p>
         </header>
 
-        <!-- OCR Section -->
-        <div class="ocr-section">
-            <button type="button" id="scanBtn" class="scan-btn">
-                <i class="fa-solid fa-camera"></i> ถ่ายรูปบัตรประชาชน (เติมข้อมูลอัตโนมัติ)
+        <!-- Camera Section -->
+        <div class="camera-section">
+            <button type="button" id="openCameraBtn" class="scan-btn">
+                <i class="fa-solid fa-camera"></i> ถ่ายรูปบัตรประชาชน (พร้อมกรอบเล็ง)
             </button>
-            <input type="file" id="idCardInput" accept="image/*" capture="environment" style="display: none;">
-
-            <div id="ocr-status" class="ocr-status" style="display: none;">
-                <div class="loader-scanner"></div>
-                <p id="ocr-message">กำลังประมวลผลภาพ... (อาจใช้เวลาสักครู่)</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="ocr-progress"></div>
-                </div>
+            <div id="preview-container" style="display:none; margin-top: 15px; text-align: center;">
+                <img id="preview-image" src="" alt="Captured ID"
+                    style="max-width: 100%; border-radius: 12px; border: 2px solid #4f46e5;">
+                <button type="button" id="retakeBtn" class="retake-btn"><i class="fa-solid fa-rotate-right"></i>
+                    ถ่ายใหม่</button>
             </div>
+            <p id="file-status" class="file-status-text"></p>
         </div>
 
         <form id="dataForm" name="submit-to-google-sheet">
@@ -98,6 +96,29 @@
 
             <p id="status-message" class="status-message"></p>
         </form>
+    </div>
+
+    <!-- Camera Modal (Full Screen) -->
+    <div id="cameraModal" class="camera-modal">
+        <div class="camera-container">
+            <video id="camera-feed" autoplay playsinline></video>
+            <canvas id="camera-canvas" style="display:none;"></canvas>
+
+            <!-- ID Card Guide Frame -->
+            <div class="guide-frame">
+                <div class="corner top-left"></div>
+                <div class="corner top-right"></div>
+                <div class="corner bottom-left"></div>
+                <div class="corner bottom-right"></div>
+                <span class="guide-text">วางบัตรให้ตรงกรอบ</span>
+            </div>
+
+            <div class="camera-controls">
+                <button id="closeCameraBtn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+                <button id="captureBtn" class="shutter-btn"></button>
+                <button id="switchCameraBtn" class="icon-btn"><i class="fa-solid fa-rotate"></i></button>
+            </div>
+        </div>
     </div>
 
     <!-- Success Modal -->
