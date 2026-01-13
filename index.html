@@ -102,28 +102,8 @@
         </form>
     </div>
 
-    <!-- Camera Modal (Full Screen) -->
-    <div id="cameraModal" class="camera-modal">
-        <div class="camera-container">
-            <video id="camera-feed" autoplay playsinline></video>
-            <canvas id="camera-canvas" style="display:none;"></canvas>
-
-            <!-- ID Card Guide Frame -->
-            <div class="guide-frame">
-                <div class="corner top-left"></div>
-                <div class="corner top-right"></div>
-                <div class="corner bottom-left"></div>
-                <div class="corner bottom-right"></div>
-                <span class="guide-text">ให้กล้องสมาร์ทโฟน วางรูปบัตรในกรอบ</span>
-            </div>
-
-            <div class="camera-controls">
-                <button id="closeCameraBtn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
-                <button id="captureBtn" class="shutter-btn"></button>
-                <button id="switchCameraBtn" class="icon-btn"><i class="fa-solid fa-rotate"></i></button>
-            </div>
-        </div>
-    </div>
+    <!-- Hidden Native Camera Input -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
 
     <!-- Success Modal -->
     <div id="successModal" class="modal">

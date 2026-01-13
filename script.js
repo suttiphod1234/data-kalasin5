@@ -12,20 +12,13 @@ const subDistrictSelect = document.getElementById('sub_district');
 
 // Camera Elements
 const openCameraBtn = document.getElementById('openCameraBtn');
-const cameraModal = document.getElementById('cameraModal');
-const closeCameraBtn = document.getElementById('closeCameraBtn');
-const captureBtn = document.getElementById('captureBtn');
-const switchCameraBtn = document.getElementById('switchCameraBtn');
-const video = document.getElementById('camera-feed');
-const canvas = document.getElementById('camera-canvas');
+const cameraInput = document.getElementById('cameraInput'); // Hidden input
 const previewContainer = document.getElementById('preview-container');
 const previewImage = document.getElementById('preview-image');
 const retakeBtn = document.getElementById('retakeBtn');
 const fileStatus = document.getElementById('file-status');
 
 // State
-let stream = null;
-let currentFacingMode = 'environment'; // Rear camera by default
 let currentFile = null;
 
 // Data for Dropdowns
@@ -74,99 +67,44 @@ initDropdowns();
 
 // --- LINE BROWSER DETECTION ---
 if (navigator.userAgent.match(/Line/i)) {
-    alert('คำแนะนำ: เพื่อใช้งานกล้องได้สมบูรณ์ กรุณากดที่เมนูมุมขวาบน แล้วเลือก "Open in Browser" (เปิดในเบราว์เซอร์)');
+    // Note: Native file input usually handles this better, but warning is still good
+    console.log("Line Browser detected");
 }
 
 
-// --- CAMERA LOGIC START ---
+// --- NATIVE CAMERA LOGIC START ---
 
 openCameraBtn.addEventListener('click', () => {
-    openCamera();
+    cameraInput.click(); // Trigger the native file picker/camera
 });
 
-closeCameraBtn.addEventListener('click', () => {
-    stopCamera();
-    cameraModal.style.display = 'none';
-});
-
-switchCameraBtn.addEventListener('click', () => {
-    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-    stopCamera();
-    openCamera();
-});
-
-async function openCamera() {
-    cameraModal.style.display = 'flex'; // Show modal
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: currentFacingMode,
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            }
-        });
-        video.srcObject = stream;
-    } catch (err) {
-        console.error("Camera access denied:", err);
-        alert('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึงกล้อง (หรือลองเปิดใน Safari/Chrome)');
-        cameraModal.style.display = 'none';
+cameraInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        handleFileSelect(file);
     }
-}
-
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
-}
-
-captureBtn.addEventListener('click', () => {
-    // 1. Draw video to canvas
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext('2d');
-
-    // Flip if using front camera to mimic mirror effect (optional)
-    if (currentFacingMode === 'user') {
-        ctx.translate(width, 0);
-        ctx.scale(-1, 1);
-    }
-
-    ctx.drawImage(video, 0, 0, width, height);
-
-    // 2. Convert to Blob (Image file)
-    canvas.toBlob(blob => {
-        // Create a File object
-        currentFile = new File([blob], "id_card_" + Date.now() + ".jpg", { type: "image/jpeg" });
-
-        // Show Preview
-        const url = URL.createObjectURL(blob);
-        previewImage.src = url;
-        previewContainer.style.display = 'block';
-
-        // Hide Camera Button / Show Retake
-        openCameraBtn.style.display = 'none';
-        fileStatus.textContent = 'บันทึกภาพแล้ว พร้อมอัปโหลด';
-
-        // Close Camera Modal
-        stopCamera();
-        cameraModal.style.display = 'none';
-
-    }, 'image/jpeg', 0.85); // 85% quality
 });
 
 retakeBtn.addEventListener('click', () => {
-    currentFile = null;
-    previewContainer.style.display = 'none';
-    openCameraBtn.style.display = 'flex'; // Enable button to open camera again
-    fileStatus.textContent = '';
-    openCamera(); // Re-open instantly
+    cameraInput.value = ''; // Reset input
+    cameraInput.click(); // Trigger again
 });
 
-// --- CAMERA LOGIC END ---
+function handleFileSelect(file) {
+    currentFile = file;
+
+    // Show Preview
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        previewImage.src = e.target.result;
+        previewContainer.style.display = 'block';
+        openCameraBtn.style.display = 'none'; // Hide main button
+        fileStatus.textContent = 'บันทึกภาพแล้ว พร้อมอัปโหลด';
+    };
+    reader.readAsDataURL(file);
+}
+
+// --- NATIVE CAMERA LOGIC END ---
 
 
 // Modal Logic
@@ -186,6 +124,7 @@ function closeModal() {
 
         // Reset Camera UI
         currentFile = null;
+        cameraInput.value = '';
         previewContainer.style.display = 'none';
         openCameraBtn.style.display = 'flex';
         fileStatus.textContent = '';

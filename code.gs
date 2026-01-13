@@ -35,7 +35,8 @@ function doPost (e) {
       if (header === 'timestamp') {
         return new Date()
       }
-      if (header === 'image_url') {
+      // Check for various possible image header names based on user's sheet
+      if (header === 'image_url' || header === 'imag' || header === 'image' || header === 'photo') {
         return fileUrl;
       }
       return e.parameter[header]
