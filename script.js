@@ -227,17 +227,39 @@ form.addEventListener('submit', e => {
 function sendData(formData) {
     fetch(scriptURL, { method: 'POST', body: formData })
         .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
             submitBtn.classList.remove('loading');
             submitBtn.disabled = false;
-            console.log('Success!', response);
-            openModal();
-            form.reset();
+
+            if (data.result === 'success') {
+                console.log('Success!', data);
+                openModal();
+                form.reset();
+
+                // Reset Preview
+                currentFile = null;
+                cameraInput.value = '';
+                previewContainer.style.display = 'none';
+                openCameraBtn.style.display = 'flex';
+                fileStatus.textContent = '';
+            } else {
+                console.error('Script Error:', data.error);
+                alert('เกิดข้อผิดพลาดจากระบบ: ' + data.error);
+                statusMsg.textContent = 'บันทึกไม่สำเร็จ: ' + data.error;
+                statusMsg.classList.add('status-error');
+            }
         })
         .catch(error => {
             submitBtn.classList.remove('loading');
             submitBtn.disabled = false;
             console.error('Error!', error.message);
-            statusMsg.textContent = 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง';
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
+            statusMsg.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง';
             statusMsg.classList.add('status-error');
         });
 }
