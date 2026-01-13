@@ -15,9 +15,14 @@ function doPost (e) {
 
   try {
     var doc = SpreadsheetApp.openById(sheetId)
-    var sheet = doc.getSheetByName(sheetName)
+    // Use the first sheet...
+    var sheet = doc.getSheets()[0]
 
-    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    // Get headers and clean them (trim spaces)
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) {
+      return h.toString().toLowerCase().trim();
+    });
+    
     var nextRow = sheet.getLastRow() + 1
     
     // IMAGE UPLOAD LOGIC
@@ -32,14 +37,14 @@ function doPost (e) {
     }
 
     var newRow = headers.map(function(header) {
-      if (header === 'timestamp') {
-        return new Date()
-      }
-      // Check for various possible image header names based on user's sheet
-      if (header === 'image_url' || header === 'imag' || header === 'image' || header === 'photo') {
-        return fileUrl;
-      }
-      return e.parameter[header]
+      // Logic to match headers (case insensitive)
+      if (header === 'timestamp') return new Date()
+      
+      // Match image column
+      if (['image_url', 'imag', 'image', 'photo', 'img'].includes(header)) return fileUrl;
+      
+      // Match other columns
+      return e.parameter[header] || e.parameter[header.replace('_', ' ')] || '';
     })
 
     sheet.getRange(nextRow, 1, 1, newRow.length).setValues([newRow])
