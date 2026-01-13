@@ -67,7 +67,6 @@ initDropdowns();
 
 // --- LINE BROWSER DETECTION ---
 if (navigator.userAgent.match(/Line/i)) {
-    // Note: Native file input usually handles this better, but warning is still good
     console.log("Line Browser detected");
 }
 
@@ -81,7 +80,7 @@ openCameraBtn.addEventListener('click', () => {
 cameraInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
-        handleFileSelect(file);
+        processAndCompressImage(file);
     }
 });
 
@@ -90,18 +89,65 @@ retakeBtn.addEventListener('click', () => {
     cameraInput.click(); // Trigger again
 });
 
-function handleFileSelect(file) {
-    currentFile = file;
+function processAndCompressImage(file) {
+    fileStatus.textContent = 'กำลังประมวลผลรูปภาพ (บีบอัดให้เหลือ 1MB)...';
+    openCameraBtn.disabled = true;
 
-    // Show Preview
     const reader = new FileReader();
-    reader.onload = function (e) {
-        previewImage.src = e.target.result;
-        previewContainer.style.display = 'block';
-        openCameraBtn.style.display = 'none'; // Hide main button
-        fileStatus.textContent = 'บันทึกภาพแล้ว พร้อมอัปโหลด';
-    };
     reader.readAsDataURL(file);
+    reader.onload = function (event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = function () {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Resize if too big (Max 1600px width/height is plenty for ID card)
+            const MAX_SIZE = 1600;
+            if (width > height) {
+                if (width > MAX_SIZE) {
+                    height *= MAX_SIZE / width;
+                    width = MAX_SIZE;
+                }
+            } else {
+                if (height > MAX_SIZE) {
+                    width *= MAX_SIZE / height;
+                    height = MAX_SIZE;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compress to ~1MB
+            // Start at 0.8 quality, reduce if needed
+            let quality = 0.8;
+
+            function tryCompress(q) {
+                canvas.toBlob((blob) => {
+                    if (blob.size > 1024 * 1024 && q > 0.1) {
+                        // Still too big (>1MB), try lower quality
+                        tryCompress(q - 0.1);
+                    } else {
+                        // Good size or quality too low
+                        currentFile = new File([blob], "id_card_compressed.jpg", { type: "image/jpeg" });
+
+                        // Show Preview
+                        previewImage.src = URL.createObjectURL(currentFile);
+                        previewContainer.style.display = 'block';
+                        openCameraBtn.style.display = 'none'; // Hide main button
+                        fileStatus.textContent = `รูปภาพพร้อมใช้งาน (${(currentFile.size / 1024 / 1024).toFixed(2)} MB)`;
+                        openCameraBtn.disabled = false;
+                    }
+                }, 'image/jpeg', q);
+            }
+
+            tryCompress(quality);
+        };
+    };
 }
 
 // --- NATIVE CAMERA LOGIC END ---
@@ -126,7 +172,7 @@ function closeModal() {
         currentFile = null;
         cameraInput.value = '';
         previewContainer.style.display = 'none';
-        openCameraBtn.style.display = 'flex';
+        openCameraBtn.style.display = 'flex'; // Show button again
         fileStatus.textContent = '';
     }, 300);
 }
@@ -155,13 +201,6 @@ form.addEventListener('submit', e => {
     const jsonFormData = new FormData(form);
 
     if (currentFile) {
-        if (currentFile.size > 5 * 1024 * 1024) {
-            alert('ไฟล์รูปภาพมีขนาดใหญ่เกินไป (ต้องไม่เกิน 5MB)');
-            submitBtn.classList.remove('loading');
-            submitBtn.disabled = false;
-            return;
-        }
-
         const reader = new FileReader();
         reader.readAsDataURL(currentFile);
         reader.onload = function () {
@@ -178,6 +217,9 @@ form.addEventListener('submit', e => {
             submitBtn.disabled = false;
         };
     } else {
+        // Optional: If you WANT to force an image, check here
+        // if (!currentFile) { alert('กรุณาถ่ายรูปบัตรประชาชน'); ... return; }
+
         sendData(jsonFormData);
     }
 });
