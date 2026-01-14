@@ -228,42 +228,112 @@ async function performOCR(imageFile) {
 
 // Auto-fill form from OCR text
 function autoFillFormFromOCR(text) {
-    // Extract ID number (13 digits) - Fill into national_id field
-    const idMatch = text.match(/\d{1}\s*\d{4}\s*\d{5}\s*\d{2}\s*\d{1}|\d{13}/);
-    if (idMatch) {
-        const idNumber = idMatch[0].replace(/\s/g, '');
-        document.getElementById('national_id').value = idNumber;
-    }
+    console.log('OCR Text:', text); // Debug log
 
-    // Extract name (Thai text patterns)
-    // Look for common Thai name patterns after "ชื่อตัว" or "ชื่อ" or "Name"
-    const namePatterns = [
-        /(?:ชื่อตัว|ชื่อ|Name)[:\s]*([ก-๙\s]+)/i,
-        /(?:นาย|นาง|นางสาว)\s*([ก-๙\s]+)/i
+    // Clean up text - remove extra spaces and normalize
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+
+    // 1. Extract ID number (13 digits) - กรอบสีแดง
+    // Pattern: 3 4614 00142 52 1 or 3461400142521
+    const idPatterns = [
+        /(\d)\s*(\d{4})\s*(\d{5})\s*(\d{2})\s*(\d)/g,  // With spaces
+        /(\d{13})/g  // Without spaces
     ];
 
-    for (let pattern of namePatterns) {
-        const nameMatch = text.match(pattern);
-        if (nameMatch && nameMatch[1]) {
-            const fullname = nameMatch[1].trim();
-            if (fullname.length > 2) {
-                document.getElementById('fullname').value = fullname;
+    for (let pattern of idPatterns) {
+        const idMatch = cleanText.match(pattern);
+        if (idMatch) {
+            let idNumber = idMatch[0].replace(/\s/g, '');
+            if (idNumber.length === 13) {
+                document.getElementById('national_id').value = idNumber;
+                console.log('Found ID:', idNumber);
                 break;
             }
         }
     }
 
-    // Extract address components
-    // Look for "บ้านเลขที่" or "เลขที่"
-    const houseMatch = text.match(/(?:บ้านเลขที่|เลขที่)[:\s]*(\d+(?:\/\d+)?)/i);
-    if (houseMatch) {
-        document.getElementById('house_number').value = houseMatch[1];
+    // 2. Extract Thai name - กรอบสีส้ม
+    // Look for patterns like: นาย/นาง/นางสาว followed by Thai text
+    const namePatterns = [
+        /(?:นาย|นาง|นางสาว)\s+([ก-๙]+)\s+([ก-๙]+)/i,  // Title + First + Last
+        /ชื่อตัวและชื่อสกุล\s+([ก-๙\s]+)/i,  // After label
+        /Name\s+(?:MR\.|MRS\.|MISS)?\s*([A-Za-z]+)\s+Last\s+name\s+([A-Za-z]+)/i  // English format
+    ];
+
+    for (let pattern of namePatterns) {
+        const nameMatch = cleanText.match(pattern);
+        if (nameMatch) {
+            let fullname = '';
+            if (pattern.source.includes('Name')) {
+                // Convert English to Thai if needed, or use as is
+                fullname = nameMatch[1] + ' ' + nameMatch[2];
+            } else if (nameMatch[1] && nameMatch[2]) {
+                fullname = nameMatch[0].trim();
+            } else if (nameMatch[1]) {
+                fullname = nameMatch[1].trim();
+            }
+
+            if (fullname.length > 3) {
+                document.getElementById('fullname').value = fullname;
+                console.log('Found Name:', fullname);
+                break;
+            }
+        }
     }
 
-    // Look for "หมู่ที่" or "หมู่"
-    const mooMatch = text.match(/(?:หมู่ที่|หมู่)[:\s]*(\d+)/i);
-    if (mooMatch) {
-        document.getElementById('village_moo').value = mooMatch[1];
+    // 3. Extract house number - กรอบสีม่วง (บ้านเลขที่)
+    const housePatterns = [
+        /ที่อยู่\s+(\d+(?:\/\d+)?)/i,
+        /บ้านเลขที่\s+(\d+(?:\/\d+)?)/i,
+        /เลขที่\s+(\d+(?:\/\d+)?)/i,
+        /ที่อยู่.*?(\d+).*?หมู่/i,  // Number before Moo
+    ];
+
+    for (let pattern of housePatterns) {
+        const houseMatch = cleanText.match(pattern);
+        if (houseMatch && houseMatch[1]) {
+            const houseNum = houseMatch[1].trim();
+            if (houseNum.length <= 10) {  // Reasonable house number length
+                document.getElementById('house_number').value = houseNum;
+                console.log('Found House Number:', houseNum);
+                break;
+            }
+        }
+    }
+
+    // 4. Extract Moo (village number) - กรอบสีเหลือง (หมู่ที่)
+    const mooPatterns = [
+        /หมู่ที่?\s*(\d+)/i,
+        /หมู่\s*(\d+)/i,
+        /ม\.\s*(\d+)/i,
+        /หมู่.*?(\d+)/i
+    ];
+
+    for (let pattern of mooPatterns) {
+        const mooMatch = cleanText.match(pattern);
+        if (mooMatch && mooMatch[1]) {
+            const mooNum = mooMatch[1].trim();
+            if (mooNum.length <= 3 && parseInt(mooNum) > 0 && parseInt(mooNum) <= 99) {
+                document.getElementById('village_moo').value = mooNum;
+                console.log('Found Moo:', mooNum);
+                break;
+            }
+        }
+    }
+
+    // Additional: Try to extract address components from full address line
+    // Pattern: ที่อยู่ 32 หมู่ 1 ต.หนองอีบุตร อ.ห้วยผึ้ง จ.กาฬสินธุ์
+    const fullAddressPattern = /ที่อยู่\s+(\d+(?:\/\d+)?)\s+หมู่\s*(\d+)/i;
+    const fullAddressMatch = cleanText.match(fullAddressPattern);
+    if (fullAddressMatch) {
+        if (!document.getElementById('house_number').value) {
+            document.getElementById('house_number').value = fullAddressMatch[1];
+            console.log('Found House from full address:', fullAddressMatch[1]);
+        }
+        if (!document.getElementById('village_moo').value) {
+            document.getElementById('village_moo').value = fullAddressMatch[2];
+            console.log('Found Moo from full address:', fullAddressMatch[2]);
+        }
     }
 }
 
