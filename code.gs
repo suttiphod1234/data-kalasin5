@@ -79,16 +79,16 @@ function doPost(e) {
     
     var nextRow = sheet.getLastRow() + 1
     
-    // Check for duplicate leader_id
-    var leaderIdColumnIndex = headers.indexOf('leader_id');
-    if (leaderIdColumnIndex !== -1 && e.parameter.leader_id && sheet.getLastRow() > 1) {
-      var existingData = sheet.getRange(2, leaderIdColumnIndex + 1, sheet.getLastRow() - 1, 1).getValues();
+    // Check for duplicate national_id (เลขบัตรประชาชน)
+    var nationalIdColumnIndex = headers.indexOf('national_id');
+    if (nationalIdColumnIndex !== -1 && e.parameter.national_id && sheet.getLastRow() > 1) {
+      var existingData = sheet.getRange(2, nationalIdColumnIndex + 1, sheet.getLastRow() - 1, 1).getValues();
       var isDuplicate = existingData.some(function(row) {
-        return row[0] && row[0].toString().trim() === e.parameter.leader_id.toString().trim();
+        return row[0] && row[0].toString().trim() === e.parameter.national_id.toString().trim();
       });
       
       if (isDuplicate) {
-        return createResponse('error', 'รหัสแกนนำ "' + e.parameter.leader_id + '" มีอยู่ในระบบแล้ว กรุณาตรวจสอบข้อมูล')
+        return createResponse('error', 'เลขบัตรประชาชน "' + e.parameter.national_id + '" มีอยู่ในระบบแล้ว กรุณาตรวจสอบข้อมูล')
       }
     }
     
