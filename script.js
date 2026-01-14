@@ -108,22 +108,48 @@ window.addEventListener('message', (event) => {
                 // Show preview
                 previewImage.src = image;
                 previewContainer.style.display = 'block';
-                fileStatus.textContent = '✅ สแกนบัตรสำเร็จ!';
+                fileStatus.textContent = '✅ สแกนบัตรสำเร็จ! ข้อมูลถูกกรอกอัตโนมัติ คุณสามารถแก้ไขได้';
                 fileStatus.style.color = '#22c55e';
 
-                // Fill form with scanned data
+                // Fill form with scanned data and highlight
+                let filledCount = 0;
+
                 if (data.nationalId) {
-                    document.getElementById('national_id').value = data.nationalId;
+                    const field = document.getElementById('national_id');
+                    field.value = data.nationalId;
+                    field.style.background = '#dcfce7'; // Light green
+                    filledCount++;
                 }
                 if (data.fullname) {
-                    document.getElementById('fullname').value = data.fullname;
+                    const field = document.getElementById('fullname');
+                    field.value = data.fullname;
+                    field.style.background = '#dcfce7';
+                    filledCount++;
                 }
                 if (data.houseNumber) {
-                    document.getElementById('house_number').value = data.houseNumber;
+                    const field = document.getElementById('house_number');
+                    field.value = data.houseNumber;
+                    field.style.background = '#dcfce7';
+                    filledCount++;
                 }
                 if (data.moo) {
-                    document.getElementById('village_moo').value = data.moo;
+                    const field = document.getElementById('village_moo');
+                    field.value = data.moo;
+                    field.style.background = '#dcfce7';
+                    filledCount++;
                 }
+
+                // Show summary
+                if (filledCount > 0) {
+                    fileStatus.textContent = `✅ สแกนสำเร็จ! กรอกข้อมูล ${filledCount} ฟิลด์อัตโนมัติ (สามารถแก้ไขได้)`;
+                }
+
+                // Remove highlight when user starts editing
+                document.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('focus', function () {
+                        this.style.background = '';
+                    }, { once: true });
+                });
             })
             .catch(error => {
                 console.error('Error processing image:', error);
