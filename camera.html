@@ -93,6 +93,55 @@
             white-space: nowrap;
         }
 
+        /* OCR Target Areas - Colored Boxes */
+        .ocr-box {
+            position: absolute;
+            border: 2px solid;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .ocr-box-id {
+            /* เลขบัตรประชาชน - สีแดง */
+            top: 8%;
+            right: 5%;
+            width: 60%;
+            height: 12%;
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .ocr-box-name {
+            /* ชื่อ-สกุล - สีส้ม */
+            top: 22%;
+            left: 28%;
+            width: 65%;
+            height: 10%;
+            border-color: #f97316;
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        .ocr-box-house {
+            /* บ้านเลขที่ - สีเหลือง */
+            bottom: 35%;
+            left: 15%;
+            width: 12%;
+            height: 8%;
+            border-color: #eab308;
+            background: rgba(234, 179, 8, 0.1);
+        }
+
+        .ocr-box-moo {
+            /* หมู่ที่ - สีม่วง */
+            bottom: 35%;
+            left: 30%;
+            width: 8%;
+            height: 8%;
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.1);
+        }
+
         .corner {
             position: absolute;
             width: 30px;
@@ -283,6 +332,12 @@
                 <div class="corner top-right"></div>
                 <div class="corner bottom-left"></div>
                 <div class="corner bottom-right"></div>
+
+                <!-- OCR Target Areas -->
+                <div class="ocr-box ocr-box-id" title="เลขบัตรประชาชน"></div>
+                <div class="ocr-box ocr-box-name" title="ชื่อ-สกุล"></div>
+                <div class="ocr-box ocr-box-house" title="บ้านเลขที่"></div>
+                <div class="ocr-box ocr-box-moo" title="หมู่ที่"></div>
             </div>
             <div id="countdown" class="countdown"></div>
         </div>
@@ -402,12 +457,31 @@
 
         // Capture image
         function captureImage() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
+            // Get full video dimensions
+            const fullWidth = video.videoWidth;
+            const fullHeight = video.videoHeight;
+
+            // Calculate card frame dimensions (85% width, aspect ratio 1.586)
+            const frameWidth = fullWidth * 0.85;
+            const frameHeight = frameWidth / 1.586;
+
+            // Calculate center position
+            const frameX = (fullWidth - frameWidth) / 2;
+            const frameY = (fullHeight - frameHeight) / 2;
+
+            // Set canvas to cropped size
+            canvas.width = frameWidth;
+            canvas.height = frameHeight;
+
+            // Draw only the card frame area
+            ctx.drawImage(
+                video,
+                frameX, frameY, frameWidth, frameHeight,  // Source rectangle
+                0, 0, frameWidth, frameHeight              // Destination rectangle
+            );
 
             canvas.toBlob((blob) => {
-                const file = new File([blob], "id_card.jpg", { type: "image/jpeg" });
+                const file = new File([blob], "id_card_cropped.jpg", { type: "image/jpeg" });
                 preview.src = URL.createObjectURL(file);
                 preview.style.display = 'block';
 
