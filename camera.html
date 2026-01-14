@@ -366,7 +366,7 @@
 
                 showStatus('กล้องพร้อมใช้งาน - วางบัตรในกรอบ', 'processing');
 
-                // Auto capture after 3 seconds
+                // Auto capture after 10 seconds
                 startCountdown();
 
             } catch (error) {
@@ -376,7 +376,7 @@
 
         // Countdown and auto capture
         function startCountdown() {
-            let count = 3;
+            let count = 10;
             countdown.style.display = 'block';
             countdown.textContent = count;
 
