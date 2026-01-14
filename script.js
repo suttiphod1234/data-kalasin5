@@ -72,9 +72,47 @@ districtSelect.addEventListener('change', function () {
 initDropdowns();
 
 
-// --- LINE BROWSER DETECTION ---
-if (navigator.userAgent.match(/Line/i)) {
-    console.log("Line Browser detected");
+// --- LINE BROWSER DETECTION AND HANDLING ---
+function isLINEBrowser() {
+    const ua = navigator.userAgent;
+    return ua.match(/Line/i) !== null;
+}
+
+function openInExternalBrowser() {
+    const currentUrl = window.location.href;
+
+    // Try to open in external browser
+    // For LINE, this will trigger the "Open in browser" action
+    window.location.href = currentUrl;
+
+    // Also copy URL to clipboard as backup
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            alert('📋 ลิงก์ถูกคัดลอกแล้ว!\nกรุณาวางลิงก์ในเบราว์เซอร์ภายนอก (Chrome, Safari)');
+        }).catch(() => {
+            alert('กรุณาคัดลอกลิงก์นี้และเปิดในเบราว์เซอร์ภายนอก:\n' + currentUrl);
+        });
+    } else {
+        alert('กรุณาคัดลอกลิงก์นี้และเปิดในเบราว์เซอร์ภายนอก:\n' + currentUrl);
+    }
+}
+
+// Check if running in LINE browser and show warning
+if (isLINEBrowser()) {
+    console.log("LINE Browser detected - showing warning");
+    const warningElement = document.getElementById('line-browser-warning');
+    if (warningElement) {
+        warningElement.style.display = 'block';
+    }
+
+    // Disable camera button
+    const cameraBtn = document.getElementById('openCameraBtn');
+    if (cameraBtn) {
+        cameraBtn.disabled = true;
+        cameraBtn.style.opacity = '0.5';
+        cameraBtn.style.cursor = 'not-allowed';
+        cameraBtn.title = 'กรุณาเปิดในเบราว์เซอร์ภายนอก';
+    }
 }
 
 
