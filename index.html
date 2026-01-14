@@ -30,6 +30,21 @@
             <p>กรุณากรอกข้อมูลให้ครบถ้วนเพื่อบันทึกลงในระบบ</p>
         </header>
 
+        <!-- LINE Browser Warning -->
+        <div id="line-browser-warning"
+            style="display:none; margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); border-radius: 16px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);">
+            <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 20px;">ไม่สามารถใช้กล้องใน LINE ได้</h3>
+            <p style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.95;">
+                LINE Browser ไม่อนุญาตให้เข้าถึงกล้อง<br>
+                กรุณาเปิดในเบราว์เซอร์ภายนอก (Chrome, Safari)
+            </p>
+            <button onclick="openInExternalBrowser()"
+                style="background: white; color: #ee5a6f; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; font-family: 'Sarabun', sans-serif;">
+                🌐 เปิดในเบราว์เซอร์
+            </button>
+        </div>
+
         <!-- Camera Section -->
         <div class="camera-section">
             <label
