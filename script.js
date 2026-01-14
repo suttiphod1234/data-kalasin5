@@ -168,6 +168,14 @@ function processAndCompressImage(file) {
 
 // OCR Function using Tesseract.js
 async function performOCR(imageFile) {
+    // Check if Tesseract is available
+    if (typeof Tesseract === 'undefined') {
+        console.warn('Tesseract.js not loaded, skipping OCR');
+        fileStatus.textContent = 'รูปภาพพร้อมใช้งาน - กรุณากรอกข้อมูลด้วยตนเอง';
+        fileStatus.style.color = '#f59e0b';
+        return;
+    }
+
     try {
         // Show OCR progress
         ocrProgress.style.display = 'block';
@@ -211,10 +219,10 @@ async function performOCR(imageFile) {
     } catch (error) {
         console.error('OCR Error:', error);
         ocrProgress.style.display = 'none';
-        scannedTextContainer.style.display = 'block';
-        scannedTextElement.textContent = 'เกิดข้อผิดพลาดในการสแกนข้อความ: ' + error.message;
-        fileStatus.textContent = 'เกิดข้อผิดพลาดในการสแกนข้อความ กรุณากรอกข้อมูลด้วยตนเอง';
-        fileStatus.style.color = '#ef4444';
+
+        // Don't show error to user, just let them fill manually
+        fileStatus.textContent = 'รูปภาพพร้อมใช้งาน - กรุณากรอกข้อมูลด้วยตนเอง';
+        fileStatus.style.color = '#f59e0b';
     }
 }
 
