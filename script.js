@@ -78,28 +78,65 @@ if (navigator.userAgent.match(/Line/i)) {
 }
 
 
-// --- NATIVE CAMERA LOGIC WITH OCR START ---
+// --- ADVANCED CAMERA WITH FRAME OVERLAY START ---
 
+// Open camera.html in popup
 openCameraBtn.addEventListener('click', () => {
-    cameraInput.click(); // Trigger the native file picker/camera
+    const width = Math.min(800, window.innerWidth - 40);
+    const height = Math.min(900, window.innerHeight - 40);
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
+    window.open(
+        'camera.html',
+        'IDCardScanner',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
 });
 
+// Listen for scanned data from camera.html
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'ID_CARD_SCANNED') {
+        const { data, image } = event.data;
+
+        // Convert base64 image to File object
+        fetch(image)
+            .then(res => res.blob())
+            .then(blob => {
+                currentFile = new File([blob], "id_card_scanned.jpg", { type: "image/jpeg" });
+
+                // Show preview
+                previewImage.src = image;
+                previewContainer.style.display = 'block';
+                fileStatus.textContent = '✅ สแกนบัตรสำเร็จ!';
+                fileStatus.style.color = '#22c55e';
+
+                // Fill form with scanned data
+                if (data.nationalId) {
+                    document.getElementById('national_id').value = data.nationalId;
+                }
+                if (data.fullname) {
+                    document.getElementById('fullname').value = data.fullname;
+                }
+                if (data.houseNumber) {
+                    document.getElementById('house_number').value = data.houseNumber;
+                }
+                if (data.moo) {
+                    document.getElementById('village_moo').value = data.moo;
+                }
+            })
+            .catch(error => {
+                console.error('Error processing image:', error);
+            });
+    }
+});
+
+// Fallback: Keep native camera input for compatibility
 cameraInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
         processAndCompressImage(file);
     }
-});
-
-retakeBtn.addEventListener('click', () => {
-    cameraInput.value = ''; // Reset input
-    currentFile = null;
-    previewContainer.style.display = 'none';
-    openCameraBtn.style.display = 'flex';
-    fileStatus.textContent = '';
-    scannedTextContainer.style.display = 'none';
-    ocrProgress.style.display = 'none';
-    cameraInput.click(); // Trigger again
 });
 
 function processAndCompressImage(file) {
