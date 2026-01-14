@@ -81,19 +81,42 @@ function isLINEBrowser() {
 function openInExternalBrowser() {
     const currentUrl = window.location.href;
 
-    // Try to open in external browser
-    // For LINE, this will trigger the "Open in browser" action
-    window.location.href = currentUrl;
+    // Method 1: Use intent URL for Android
+    const intentUrl = `intent://${currentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;end`;
 
-    // Also copy URL to clipboard as backup
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(currentUrl).then(() => {
-            alert('📋 ลิงก์ถูกคัดลอกแล้ว!\nกรุณาวางลิงก์ในเบราว์เซอร์ภายนอก (Chrome, Safari)');
-        }).catch(() => {
-            alert('กรุณาคัดลอกลิงก์นี้และเปิดในเบราว์เซอร์ภายนอก:\n' + currentUrl);
-        });
-    } else {
-        alert('กรุณาคัดลอกลิงก์นี้และเปิดในเบราว์เซอร์ภายนอก:\n' + currentUrl);
+    // Method 2: Try window.open with _system target
+    // Method 3: Use location.href as fallback
+
+    try {
+        // For Android LINE
+        if (/android/i.test(navigator.userAgent)) {
+            window.location.href = intentUrl;
+        }
+        // For iOS LINE - use universal link
+        else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+            // Try to open in Safari
+            window.location.href = `x-web-search://?${currentUrl}`;
+
+            // Fallback after 500ms
+            setTimeout(() => {
+                window.open(currentUrl, '_blank');
+            }, 500);
+        }
+        // Generic fallback
+        else {
+            window.open(currentUrl, '_blank') || window.open(currentUrl, '_system');
+        }
+    } catch (error) {
+        console.error('Error opening external browser:', error);
+
+        // Final fallback: copy to clipboard and show alert
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                alert('📋 ลิงก์ถูกคัดลอกแล้ว!\n\nกรุณา:\n1. กดปุ่ม ⋮ (เมนู) ที่มุมบนขวา\n2. เลือก "เปิดในเบราว์เซอร์ภายนอก"\n\nหรือวางลิงก์ใน Chrome/Safari');
+            });
+        } else {
+            alert('กรุณา:\n1. กดปุ่ม ⋮ (เมนู) ที่มุมบนขวา\n2. เลือก "เปิดในเบราว์เซอร์ภายนอก"\n\nหรือคัดลอกลิงก์:\n' + currentUrl);
+        }
     }
 }
 
