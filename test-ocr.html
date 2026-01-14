@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทดสอบ OCR</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #4f46e5;
+            text-align: center;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #4f46e5;
+        }
+
+        #result {
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+
+        #progress {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .extracted-data {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .data-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .value {
+            color: #059669;
+            font-size: 18px;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 ทดสอบสแกนบัตรประชาชน</h1>
+
+        <input type="file" id="imageInput" accept="image/*">
+
+        <img id="imagePreview" style="display:none;">
+
+        <div id="progress">
+            <div id="progressText">กำลังสแกน...</div>
+            <div id="progressPercent">0%</div>
+        </div>
+
+        <div id="extractedData" class="extracted-data" style="display:none;">
+            <h3>📋 ข้อมูลที่สแกนได้:</h3>
+            <div class="data-item">
+                <span class="label">เลขบัตรประชาชน:</span>
+                <span class="value" id="idNumber">-</span>
+            </div>
+            <div class="data-item">
+                <span class="label">ชื่อ-สกุล:</span>
+                <span class="value" id="fullName">-</span>
+            </div>
+            <div class="data-item">
+                <span class="label">บ้านเลขที่:</span>
+                <span class="value" id="houseNumber">-</span>
+            </div>
+            <div class="data-item">
+                <span class="label">หมู่ที่:</span>
+                <span class="value" id="mooNumber">-</span>
+            </div>
+        </div>
+
+        <div id="result" style="display:none;">
+            <h3>📝 ข้อความทั้งหมดที่สแกนได้:</h3>
+            <div id="resultText"></div>
+        </div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const progress = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
+        const progressPercent = document.getElementById('progressPercent');
+        const result = document.getElementById('result');
+        const resultText = document.getElementById('resultText');
+        const extractedData = document.getElementById('extractedData');
+
+        imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                imagePreview.src = event.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Start OCR
+            progress.style.display = 'block';
+            result.style.display = 'none';
+            extractedData.style.display = 'none';
+
+            try {
+                const { data: { text } } = await Tesseract.recognize(
+                    file,
+                    'tha+eng',
+                    {
+                        logger: (m) => {
+                            if (m.status === 'recognizing text') {
+                                const percent = Math.round(m.progress * 100);
+                                progressPercent.textContent = `${percent}%`;
+                                progressText.textContent = `กำลังสแกนข้อความ... ${percent}%`;
+                            }
+                        }
+                    }
+                );
+
+                progress.style.display = 'none';
+                result.style.display = 'block';
+                extractedData.style.display = 'block';
+                resultText.textContent = text;
+
+                // Extract data
+                extractData(text);
+
+            } catch (error) {
+                progress.style.display = 'none';
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            }
+        });
+
+        function extractData(text) {
+            console.log('OCR Text:', text);
+
+            const cleanText = text.replace(/\s+/g, ' ').trim();
+
+            // Extract ID number
+            const idPatterns = [
+                /(\d)\s*(\d{4})\s*(\d{5})\s*(\d{2})\s*(\d)/g,
+                /(\d{13})/g
+            ];
+
+            for (let pattern of idPatterns) {
+                const idMatch = cleanText.match(pattern);
+                if (idMatch) {
+                    let idNumber = idMatch[0].replace(/\s/g, '');
+                    if (idNumber.length === 13) {
+                        document.getElementById('idNumber').textContent = idNumber;
+                        break;
+                    }
+                }
+            }
+
+            // Extract name
+            const namePatterns = [
+                /(?:นาย|นาง|นางสาว)\s+([ก-๙]+)\s+([ก-๙]+)/i,
+                /ชื่อตัวและชื่อสกุล\s+([ก-๙\s]+)/i,
+            ];
+
+            for (let pattern of namePatterns) {
+                const nameMatch = cleanText.match(pattern);
+                if (nameMatch) {
+                    let fullname = nameMatch[0].trim();
+                    if (fullname.length > 3) {
+                        document.getElementById('fullName').textContent = fullname;
+                        break;
+                    }
+                }
+            }
+
+            // Extract house number
+            const housePatterns = [
+                /ที่อยู่\s+(\d+(?:\/\d+)?)/i,
+                /ที่อยู่.*?(\d+).*?หมู่/i,
+            ];
+
+            for (let pattern of housePatterns) {
+                const houseMatch = cleanText.match(pattern);
+                if (houseMatch && houseMatch[1]) {
+                    document.getElementById('houseNumber').textContent = houseMatch[1];
+                    break;
+                }
+            }
+
+            // Extract Moo
+            const mooPatterns = [
+                /หมู่ที่?\s*(\d+)/i,
+                /หมู่\s*(\d+)/i,
+            ];
+
+            for (let pattern of mooPatterns) {
+                const mooMatch = cleanText.match(pattern);
+                if (mooMatch && mooMatch[1]) {
+                    const mooNum = mooMatch[1].trim();
+                    if (parseInt(mooNum) > 0 && parseInt(mooNum) <= 99) {
+                        document.getElementById('mooNumber').textContent = mooNum;
+                        break;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
