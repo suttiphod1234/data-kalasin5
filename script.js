@@ -1,5 +1,5 @@
 // IMPORTANT: Replace this URL with your own Google Apps Script Web App URL after deploying
-const scriptURL = 'https://script.google.com/macros/s/AKfycbypwLEZhHqEUTInd3RrKl-IPrqNnAykEyz99cvzUxwc7WGD6esr42NDPNNJH9BcHX90Cw/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbzMmobkRDvpgsmsHOaWjbbxLtJMMNQ2mvM4uD0gjPIkWSTeiRVMV7S_VuPZYFMiCzdqIQ/exec';
 
 const form = document.forms['submit-to-google-sheet'];
 const submitBtn = document.getElementById('submitBtn');
