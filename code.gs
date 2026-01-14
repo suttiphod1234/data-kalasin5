@@ -2,11 +2,32 @@ var sheetName = 'Sheet1'
 var scriptProp = PropertiesService.getScriptProperties()
 // UPDATED: Folder ID and Sheet ID
 var folderId = '1ISsWh0UTfH_F2NrhTIefQzwK7Qe_up0X' 
-var sheetId = '1t2rCVoEQatp9FMvjoR0UFUNkWgGP7Y27YTrzHPO8PQ'
+var sheetId = '1t2rCVoEQatp9FMvjoR0UFUNkWgGP7Y27YTrzHPO8PQ8'
+
+// Define all expected headers
+var expectedHeaders = [
+  'timestamp',
+  'leader_id',
+  'national_id',
+  'district',
+  'sub_district',
+  'village_moo',
+  'house_number',
+  'fullname',
+  'voters_count',
+  'image_url'
+];
 
 function intialSetup () {
-  // Not strictly needed anymore if we hardcode ID, but checking permissions
-  var activeSpreadsheet = SpreadsheetApp.openById(sheetId)
+  var doc = SpreadsheetApp.openById(sheetId)
+  var sheet = doc.getSheets()[0]
+  
+  // Check if headers exist, if not create them
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight('bold')
+    sheet.setFrozenRows(1)
+  }
 }
 
 function doPost (e) {
@@ -15,8 +36,14 @@ function doPost (e) {
 
   try {
     var doc = SpreadsheetApp.openById(sheetId)
-    // Use the first sheet...
     var sheet = doc.getSheets()[0]
+    
+    // Check if sheet is empty and create headers
+    if (sheet.getLastRow() === 0 || sheet.getLastColumn() === 0) {
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight('bold')
+      sheet.setFrozenRows(1)
+    }
 
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) {
       return h.toString().toLowerCase().trim();
@@ -26,7 +53,7 @@ function doPost (e) {
     
     // DUPLICATE CHECK - Check if leader_id already exists
     var leaderIdColumnIndex = headers.indexOf('leader_id');
-    if (leaderIdColumnIndex !== -1 && e.parameter.leader_id) {
+    if (leaderIdColumnIndex !== -1 && e.parameter.leader_id && sheet.getLastRow() > 1) {
       var existingData = sheet.getRange(2, leaderIdColumnIndex + 1, sheet.getLastRow() - 1, 1).getValues();
       var isDuplicate = existingData.some(function(row) {
         return row[0] && row[0].toString().trim() === e.parameter.leader_id.toString().trim();
