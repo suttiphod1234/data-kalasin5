@@ -12,7 +12,8 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Removed Tesseract.js -->
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 
 <body>
@@ -36,11 +37,30 @@
                 <i class="fa-solid fa-id-card"></i> รูปถ่ายบัตรประจำตัวประชาชน
             </label>
             <button type="button" id="openCameraBtn" class="scan-btn">
-                <i class="fa-solid fa-camera"></i> เปิดกล้องถ่ายรูปบัตร
+                <i class="fa-solid fa-camera"></i> เปิดกล้องถ่ายรูปและสแกนข้อความ
             </button>
             <div id="preview-container" style="display:none; margin-top: 15px; text-align: center;">
                 <img id="preview-image" src="" alt="Captured ID"
                     style="max-width: 100%; border-radius: 12px; border: 2px solid #4f46e5;">
+
+                <!-- OCR Progress -->
+                <div id="ocr-progress"
+                    style="display:none; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <span id="ocr-status">กำลังสแกนข้อความจากบัตร...</span>
+                    <div style="margin-top: 8px; font-size: 13px;" id="ocr-percentage">0%</div>
+                </div>
+
+                <!-- Scanned Text Display -->
+                <div id="scanned-text-container"
+                    style="display:none; margin-top: 15px; padding: 15px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; text-align: left;">
+                    <h4 style="margin: 0 0 10px 0; color: #15803d; font-size: 14px;">
+                        <i class="fa-solid fa-check-circle"></i> ข้อความที่สแกนได้:
+                    </h4>
+                    <pre id="scanned-text"
+                        style="margin: 0; font-size: 13px; color: #166534; white-space: pre-wrap; font-family: 'Sarabun', sans-serif;"></pre>
+                </div>
+
                 <button type="button" id="retakeBtn" class="retake-btn"><i class="fa-solid fa-rotate-right"></i>
                     ถ่ายใหม่</button>
             </div>
@@ -52,6 +72,12 @@
             <div class="form-group">
                 <label for="leader_id"><i class="fa-solid fa-id-card"></i> รหัสแกนนำ</label>
                 <input type="text" id="leader_id" name="leader_id" placeholder="ระบุรหัสแกนนำ" required>
+            </div>
+
+            <div class="form-group">
+                <label for="national_id"><i class="fa-solid fa-address-card"></i> เลขบัตรประจำตัวประชาชน</label>
+                <input type="text" id="national_id" name="national_id" placeholder="เลขบัตรประชาชน 13 หลัก" required
+                    pattern="\d{13}" maxlength="13" title="กรุณากรอกเลขบัตรประชาชน 13 หลัก">
             </div>
 
             <div class="form-row">

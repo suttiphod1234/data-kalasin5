@@ -18,6 +18,13 @@ const previewImage = document.getElementById('preview-image');
 const retakeBtn = document.getElementById('retakeBtn');
 const fileStatus = document.getElementById('file-status');
 
+// OCR Elements
+const ocrProgress = document.getElementById('ocr-progress');
+const ocrStatus = document.getElementById('ocr-status');
+const ocrPercentage = document.getElementById('ocr-percentage');
+const scannedTextContainer = document.getElementById('scanned-text-container');
+const scannedTextElement = document.getElementById('scanned-text');
+
 // State
 let currentFile = null;
 
@@ -71,7 +78,7 @@ if (navigator.userAgent.match(/Line/i)) {
 }
 
 
-// --- NATIVE CAMERA LOGIC START ---
+// --- NATIVE CAMERA LOGIC WITH OCR START ---
 
 openCameraBtn.addEventListener('click', () => {
     cameraInput.click(); // Trigger the native file picker/camera
@@ -86,6 +93,12 @@ cameraInput.addEventListener('change', (e) => {
 
 retakeBtn.addEventListener('click', () => {
     cameraInput.value = ''; // Reset input
+    currentFile = null;
+    previewContainer.style.display = 'none';
+    openCameraBtn.style.display = 'flex';
+    fileStatus.textContent = '';
+    scannedTextContainer.style.display = 'none';
+    ocrProgress.style.display = 'none';
     cameraInput.click(); // Trigger again
 });
 
@@ -141,6 +154,9 @@ function processAndCompressImage(file) {
                         openCameraBtn.style.display = 'none'; // Hide main button
                         fileStatus.textContent = `รูปภาพพร้อมใช้งาน (${(currentFile.size / 1024 / 1024).toFixed(2)} MB)`;
                         openCameraBtn.disabled = false;
+
+                        // Start OCR scanning
+                        performOCR(currentFile);
                     }
                 }, 'image/jpeg', q);
             }
@@ -150,7 +166,101 @@ function processAndCompressImage(file) {
     };
 }
 
-// --- NATIVE CAMERA LOGIC END ---
+// OCR Function using Tesseract.js
+async function performOCR(imageFile) {
+    try {
+        // Show OCR progress
+        ocrProgress.style.display = 'block';
+        scannedTextContainer.style.display = 'none';
+        ocrStatus.textContent = 'กำลังสแกนข้อความจากบัตร...';
+        ocrPercentage.textContent = '0%';
+
+        const { data: { text } } = await Tesseract.recognize(
+            imageFile,
+            'tha+eng', // Thai + English language
+            {
+                logger: (m) => {
+                    if (m.status === 'recognizing text') {
+                        const progress = Math.round(m.progress * 100);
+                        ocrPercentage.textContent = `${progress}%`;
+                        ocrStatus.textContent = `กำลังสแกนข้อความจากบัตร... ${progress}%`;
+                    }
+                }
+            }
+        );
+
+        // Hide progress, show result
+        ocrProgress.style.display = 'none';
+
+        if (text && text.trim()) {
+            scannedTextContainer.style.display = 'block';
+            scannedTextElement.textContent = text;
+
+            // Try to auto-fill form fields from scanned text
+            autoFillFormFromOCR(text);
+
+            fileStatus.textContent = `✓ สแกนข้อความสำเร็จ - กรุณาตรวจสอบข้อมูลที่กรอกอัตโนมัติ`;
+            fileStatus.style.color = '#22c55e';
+        } else {
+            scannedTextContainer.style.display = 'block';
+            scannedTextElement.textContent = 'ไม่พบข้อความในรูปภาพ กรุณากรอกข้อมูลด้วยตนเอง';
+            fileStatus.textContent = 'ไม่สามารถสแกนข้อความได้ กรุณากรอกข้อมูลด้วยตนเอง';
+            fileStatus.style.color = '#f59e0b';
+        }
+
+    } catch (error) {
+        console.error('OCR Error:', error);
+        ocrProgress.style.display = 'none';
+        scannedTextContainer.style.display = 'block';
+        scannedTextElement.textContent = 'เกิดข้อผิดพลาดในการสแกนข้อความ: ' + error.message;
+        fileStatus.textContent = 'เกิดข้อผิดพลาดในการสแกนข้อความ กรุณากรอกข้อมูลด้วยตนเอง';
+        fileStatus.style.color = '#ef4444';
+    }
+}
+
+// Auto-fill form from OCR text
+function autoFillFormFromOCR(text) {
+    // Extract ID number (13 digits) - Fill into national_id field
+    const idMatch = text.match(/\d{1}\s*\d{4}\s*\d{5}\s*\d{2}\s*\d{1}|\d{13}/);
+    if (idMatch) {
+        const idNumber = idMatch[0].replace(/\s/g, '');
+        document.getElementById('national_id').value = idNumber;
+    }
+
+    // Extract name (Thai text patterns)
+    // Look for common Thai name patterns after "ชื่อตัว" or "ชื่อ" or "Name"
+    const namePatterns = [
+        /(?:ชื่อตัว|ชื่อ|Name)[:\s]*([ก-๙\s]+)/i,
+        /(?:นาย|นาง|นางสาว)\s*([ก-๙\s]+)/i
+    ];
+
+    for (let pattern of namePatterns) {
+        const nameMatch = text.match(pattern);
+        if (nameMatch && nameMatch[1]) {
+            const fullname = nameMatch[1].trim();
+            if (fullname.length > 2) {
+                document.getElementById('fullname').value = fullname;
+                break;
+            }
+        }
+    }
+
+    // Extract address components
+    // Look for "บ้านเลขที่" or "เลขที่"
+    const houseMatch = text.match(/(?:บ้านเลขที่|เลขที่)[:\s]*(\d+(?:\/\d+)?)/i);
+    if (houseMatch) {
+        document.getElementById('house_number').value = houseMatch[1];
+    }
+
+    // Look for "หมู่ที่" or "หมู่"
+    const mooMatch = text.match(/(?:หมู่ที่|หมู่)[:\s]*(\d+)/i);
+    if (mooMatch) {
+        document.getElementById('village_moo').value = mooMatch[1];
+    }
+}
+
+// --- NATIVE CAMERA LOGIC WITH OCR END ---
+
 
 
 // Modal Logic
@@ -174,6 +284,12 @@ function closeModal() {
         previewContainer.style.display = 'none';
         openCameraBtn.style.display = 'flex'; // Show button again
         fileStatus.textContent = '';
+        fileStatus.style.color = '';
+
+        // Reset OCR UI
+        scannedTextContainer.style.display = 'none';
+        ocrProgress.style.display = 'none';
+        scannedTextElement.textContent = '';
     }, 300);
 }
 
@@ -241,12 +357,16 @@ function sendData(formData) {
                 openModal();
                 form.reset();
 
-                // Reset Preview
+                // Reset Preview and OCR
                 currentFile = null;
                 cameraInput.value = '';
                 previewContainer.style.display = 'none';
                 openCameraBtn.style.display = 'flex';
                 fileStatus.textContent = '';
+                fileStatus.style.color = '';
+                scannedTextContainer.style.display = 'none';
+                ocrProgress.style.display = 'none';
+                scannedTextElement.textContent = '';
             } else {
                 console.error('Script Error:', data.error);
                 alert('เกิดข้อผิดพลาดจากระบบ: ' + data.error);
