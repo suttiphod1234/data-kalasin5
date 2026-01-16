@@ -79,7 +79,14 @@ function doPost(e) {
     
     var nextRow = sheet.getLastRow() + 1
     
-    // Check for duplicate national_id (เลขบัตรประชาชน)
+    // ========================================
+    // DUPLICATE CHECK - เลขบัตรประชาชนเท่านั้น
+    // ========================================
+    // ตรวจสอบเฉพาะ: เลขบัตรประชาชน (national_id)
+    // ไม่ตรวจสอบ: รหัสแกนนำ, ชื่อ-สกุล, ที่อยู่, และข้อมูลอื่นๆ
+    // เหตุผล: เลขบัตรประชาชนเป็นเอกลักษณ์เฉพาะบุคคล ไม่ควรซ้ำ
+    // ========================================
+    
     var nationalIdColumnIndex = headers.indexOf('national_id');
     if (nationalIdColumnIndex !== -1 && e.parameter.national_id && sheet.getLastRow() > 1) {
       var existingData = sheet.getRange(2, nationalIdColumnIndex + 1, sheet.getLastRow() - 1, 1).getValues();
